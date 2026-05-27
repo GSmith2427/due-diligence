@@ -2,7 +2,7 @@
 
 > A self-hosted, AI-powered due diligence system for analysing public companies and the effectiveness of their leadership. Built around local LLMs and retrieval-augmented generation over SEC filings, market data, and news.
 
-[![CI](https://github.com/GSmith2427/due-diligence/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/due-diligence/actions/workflows/ci.yml)
+[![CI](https://github.com/YOUR_USERNAME/due-diligence/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/due-diligence/actions/workflows/ci.yml)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -46,7 +46,7 @@ See [`docs/architecture.md`](docs/architecture.md) for the full breakdown and [`
 
 ```bash
 # Clone and install
-git clone git@github.com:GSmith2427/due-diligence.git
+git clone git@github.com:YOUR_USERNAME/due-diligence.git
 cd due-diligence
 uv sync
 
@@ -75,7 +75,7 @@ A pre-commit hook runs the linter, formatter, and type checker. CI enforces all 
 A few choices worth surfacing up front, with the longer rationale in the ADRs.
 
 **Why not scrape LinkedIn?**
-LinkedIn's terms of service prohibit scraping, and the platform actively defends against it. More importantly, the data is available from better sources: SEC DEF 14A proxy statements legally require disclosure of executive backgrounds, board memberships, compensation, and conflicts of interest. Using primary sources is both more reliable and more defensible. See [ADR-001](docs/adr/001-leadership-data-sources.md).
+LinkedIn's terms of service prohibit scraping, and the platform actively defends against it. More importantly, the data is available from better sources: SEC DEF 14A proxy statements legally require disclosure of executive backgrounds, board memberships, compensation, and conflicts of interest. Using primary sources is both more reliable and more defensible. See [ADR-0001](docs/adr/0001-leadership-data-sources.md).
 
 **Why local LLMs?**
 The project must be free to run end-to-end. Local LLMs also mean no data leaves the user's machine, which matters for an analysis tool that may be used on companies the user is invested in.
