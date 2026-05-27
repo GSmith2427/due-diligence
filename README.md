@@ -78,7 +78,7 @@ A few choices worth surfacing up front, with the longer rationale in the ADRs.
 LinkedIn's terms of service prohibit scraping, and the platform actively defends against it. More importantly, the data is available from better sources: SEC DEF 14A proxy statements legally require disclosure of executive backgrounds, board memberships, compensation, and conflicts of interest. Using primary sources is both more reliable and more defensible. See [ADR-0001](docs/adr/0001-leadership-data-sources.md).
 
 **Why local LLMs?**
-The project must be free to run end-to-end. Local LLMs also mean no data leaves the user's machine, which matters for an analysis tool that may be used on companies the user is invested in.
+The project must be free to run end-to-end. Local LLM's also mean no data leaves the user's machine, which matters for an analysis tool that may be used on companies the user is invested in.
 
 **Why hybrid retrieval with reranking?**
 Pure dense retrieval underperforms on numeric and named-entity queries — both of which dominate financial documents. Hybrid (BM25 + dense) plus a cross-encoder rerank step closes most of the gap. See [ADR-004](docs/adr/004-retrieval-pipeline.md).
