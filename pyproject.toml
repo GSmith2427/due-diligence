@@ -3,7 +3,7 @@ name = "duediligence"
 version = "0.1.0"
 description = "AI-powered due diligence system for company and leadership analysis"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.13"
 license = { text = "MIT" }
 authors = [{ name = "Gabe" }]
 dependencies = [
@@ -44,7 +44,7 @@ dev = [
 # ---------- Ruff (lint + format) ----------
 [tool.ruff]
 line-length = 100
-target-version = "py312"
+target-version = "py313"
 src = ["src", "tests"]
 
 [tool.ruff.lint]
@@ -80,7 +80,7 @@ indent-style = "space"
 
 # ---------- mypy (strict typing) ----------
 [tool.mypy]
-python_version = "3.12"
+python_version = "3.13"
 strict = true
 warn_unreachable = true
 warn_return_any = true
