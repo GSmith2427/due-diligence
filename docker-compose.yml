@@ -1,0 +1,37 @@
+# Docker Compose stack for the due-diligence runtime.
+#
+# Services here are the *containerised* parts of the stack. Ollama itself runs
+# natively on the host (outside Docker) to retain GPU access on Apple Silicon —
+# see docs/adr/0002-runtime-topology.md for the full rationale.
+#
+# Bring up:    docker compose up -d
+# Tear down:   docker compose down
+# Reset data:  docker compose down -v   (drops the volumes)
+
+name: duediligence
+
+services:
+  qdrant:
+    image: qdrant/qdrant:v1.12.4
+    container_name: dd-qdrant
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6333:6333"  # REST API — bound to loopback only
+      - "127.0.0.1:6334:6334"  # gRPC API — bound to loopback only
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      QDRANT__SERVICE__GRPC_PORT: 6334
+      QDRANT__LOG_LEVEL: INFO
+    healthcheck:
+      # Qdrant's own /healthz endpoint, polled via the Python image's own tools.
+      # We use the qdrant image's bundled bash if available, otherwise a TCP check.
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/6333' || exit 1"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+volumes:
+  qdrant_data:
+    name: dd-qdrant-data
