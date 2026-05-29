@@ -18,6 +18,7 @@ dependencies = [
     "typer>=0.12.0",
     # Logging
     "structlog>=24.4.0",
+    "rich>=15.0.0",
 ]
 
 [project.scripts]
@@ -68,6 +69,8 @@ select = [
 ]
 ignore = [
     "ANN401",      # allow `Any` where genuinely needed
+    "ANN101",      # don't require annotations on `self` — PEP 484 says no
+    "ANN102",      # don't require annotations on `cls` — PEP 484 says no
     "TRY003",      # long messages in raises are fine
 ]
 
