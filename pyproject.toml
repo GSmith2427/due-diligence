@@ -74,8 +74,6 @@ select = [
 ]
 ignore = [
     "ANN401",      # allow `Any` where genuinely needed
-    "ANN101",
-    "ANN102",
     "TRY003",      # long messages in raises are fine
 ]
 
