@@ -1,94 +1,141 @@
 # Due Diligence
 
-> A self-hosted, AI-powered due diligence system for analysing public companies and the effectiveness of their leadership. Built around local LLMs and retrieval-augmented generation over SEC filings, market data, and news.
+[![CI](https://github.com/GSmith2427/due-diligence/actions/workflows/ci.yml/badge.svg)](https://github.com/GSmith2427/due-diligence/actions/workflows/ci.yml)
 
-[![CI](https://github.com/YOUR_USERNAME/due-diligence/actions/workflows/ci.yml/badge.svg)](https://github.com/YOUR_USERNAME/due-diligence/actions/workflows/ci.yml)
-[![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+An in-progress Python project for collecting public-company filings with verifiable source provenance and connecting local AI and vector-search services.
 
-## Overview
+> **Project status:** Infrastructure prototype under active development. SEC collection, structural text chunking, batched embedding and Qdrant indexing are implemented. Automated report generation, hybrid retrieval and the command-line workflow remain on the roadmap.
 
-Given a company ticker or name, the system produces a structured due-diligence report covering:
+## Implemented capabilities
 
-- **Leadership** — executive backgrounds, tenure, and historical track record, sourced from SEC proxy filings (DEF 14A), 10-K disclosures, and contextual news
-- **Financial health** — extracted from filings and market data, with five-year trend analysis
-- **Risk signals** — pending litigation, regulatory actions, material events, analyst dispersion
-- **Investment thesis** — synthesised by a local LLM with citations back to source documents
+- Resolve company tickers to SEC Central Index Keys (CIKs)
+- Find and retrieve a company's latest 10-K filing from SEC EDGAR
+- Extract readable text and tables from filing HTML
+- Attach the source URL, retrieval time and SHA-256 content hash to every filing
+- Communicate asynchronously with local Ollama and Qdrant services
+- Split filing text into overlapping chunks using structural separators and approximate token counts
+- Request embeddings in batches of up to 32 chunks and upsert vector records to Qdrant
+- Use deterministic chunk IDs for repeat ingestion of identical input
+- Store source URLs, filing identifiers and chunk text alongside vectors
+- Create and validate dense-vector collections in Qdrant
+- Validate typed configuration loaded from environment variables
+- Test HTTP behaviour without calling live services by using mocked transports
 
-Everything runs on your own hardware. No cloud LLM APIs, no third-party data resellers.
+## Current architecture
 
-## Architecture
+```mermaid
+flowchart LR
+    A[Company ticker] --> B[SEC ticker index]
+    B --> C[SEC submissions]
+    C --> D[Latest 10-K]
+    D --> E[HTML parser]
+    E --> F[Typed filing record]
+    F --> G[Source URL and SHA-256 hash]
 
-[Architecture diagram goes here once the v1 is shipped]
+    F --> H[Structural chunker]
+    H --> I[Batched Ollama embeddings]
+    I --> J[Qdrant upsert with source metadata]
+```
 
-The system is organised as a LangGraph state machine that fans out to parallel collection agents (leadership, financials, signals), normalises their output through Pydantic schemas with full provenance tracking, indexes the result into a hybrid vector + relational store, and synthesises the final report via retrieval-augmented generation against a local LLM served by Ollama.
+The ingestion pipeline accepts a Filing record and coordinates chunking, embedding and indexing. The caller must initialise the Qdrant collection. A user-facing ticker-to-report application is still on the roadmap.
 
-See [`docs/architecture.md`](docs/architecture.md) for the full breakdown and [`docs/adr/`](docs/adr/) for individual design decisions.
+## Technology
 
-## Tech stack
+- Python 3.13
+- httpx and async HTTP
+- Pydantic and pydantic-settings
+- Beautiful Soup and tiktoken
+- Ollama
+- Qdrant
+- pytest, Ruff and mypy
+- uv and Docker Compose
 
-| Concern | Choice | Rationale |
-|---|---|---|
-| Language | Python 3.12 | Async-native, mature data ecosystem |
-| Package management | `uv` | Faster, more reliable resolution than pip/poetry |
-| Web framework | FastAPI | Async, typed, automatic OpenAPI |
-| Orchestration | LangGraph | Explicit state-machine model is easier to reason about than nested chains |
-| LLM runtime | Ollama | Self-hosted, no API costs, runs locally on Apple Silicon |
-| Vector store | Qdrant | Hybrid search (BM25 + dense) out of the box |
-| Time-series store | DuckDB | Columnar analytics without a server |
-| Embeddings | BGE-M3 | Strong multilingual retrieval performance |
-| Reranking | BGE reranker v2-m3 | Cross-encoder rerank meaningfully lifts retrieval quality |
+## Development setup
 
-## Quickstart
+### Requirements
 
-> Coming soon. The system is under active development.
+- Python 3.13
+- [uv](https://docs.astral.sh/uv/)
+- Docker, if running Qdrant integration tests
+- Ollama, if running Ollama integration tests
+
+Clone the repository and install its dependencies:
 
 ```bash
-# Clone and install
-git clone git@github.com:YOUR_USERNAME/due-diligence.git
+git clone https://github.com/GSmith2427/due-diligence.git
 cd due-diligence
-uv sync
-
-# Bring up the stack
-docker compose up -d
-
-# Run an analysis
-uv run duediligence analyse AAPL
+uv sync --frozen
 ```
 
-## Development
+The unit tests do not require Ollama or Qdrant:
 
 ```bash
-uv sync                            # install dependencies
-uv run ruff check .                # lint
-uv run ruff format .               # format
-uv run mypy                        # type-check
-uv run pytest                      # run tests
-uv run pytest -m "not integration" # skip docker-dependent tests
+uv run pytest -m "not integration"
 ```
 
-A pre-commit hook runs the linter, formatter, and type checker. CI enforces all three on every PR.
+On revision `91bb7fa`, 37 unit tests passed locally on 5 September 2026 with **89% combined statement and branch coverage**. Ruff lint, formatting and mypy also passed. Verification used a clean source snapshot and the existing Python 3.13.13 project environment; a fresh dependency installation and live services were not tested. The three service-dependent tests were excluded.
+
+The chunker uses tiktoken, which may need to download its encoding data on first use.
+
+Run the quality checks with:
+
+```bash
+uv run ruff check .
+uv run ruff format --check .
+uv run mypy
+```
+
+To start Qdrant locally:
+
+```bash
+docker compose up -d
+```
+
+## Configuration
+
+Settings use the `DD_` prefix and double underscores for nested fields. For example:
+
+```dotenv
+DD_ENVIRONMENT=development
+DD_LOG_LEVEL=INFO
+DD_SEC_EDGAR__USER_AGENT="due-diligence your-email@example.com"
+DD_OLLAMA__HOST=http://localhost:11434
+DD_OLLAMA__CHAT_MODEL=qwen2.5:14b-instruct
+DD_OLLAMA__EMBEDDING_MODEL=bge-m3:latest
+DD_QDRANT__HOST=http://localhost:6333
+DD_QDRANT__COLLECTION_NAME=filings
+DD_QDRANT__VECTOR_SIZE=1024
+```
+
+Store local values in an untracked `.env` file. Do not commit contact details or credentials.
+
+## Roadmap
+
+- Add a working command-line entry point
+- Make overlapping chunk offsets exact and enforce token limits for unbroken/Unicode text
+- Define cleanup of old vectors when re-chunking a previously indexed filing
+- Implement and evaluate hybrid retrieval and reranking
+- Produce a small, cited report from a company ticker
+- Add broader integration coverage and reproducible retrieval evaluation
+- Document the completed architecture and operational limits
 
 ## Design decisions
 
-A few choices worth surfacing up front, with the longer rationale in the ADRs.
+The repository includes architecture decision records covering leadership data sources and the local runtime topology under [`docs/adr`](docs/adr).
 
-**Why not scrape LinkedIn?**
-LinkedIn's terms of service prohibit scraping, and the platform actively defends against it. More importantly, the data is available from better sources: SEC DEF 14A proxy statements legally require disclosure of executive backgrounds, board memberships, compensation, and conflicts of interest. Using primary sources is both more reliable and more defensible. See [ADR-0001](docs/adr/0001-leadership-data-sources.md).
+## Limitations
 
-**Why local LLMs?**
-The project must be free to run end-to-end. Local LLM's also mean no data leaves the user's machine, which matters for an analysis tool that may be used on companies the user is invested in.
+- SEC source collection currently covers 10-K filings
+- Overlap reconstruction can produce offsets that do not match the source substring
+- Character-based fallback splitting can exceed the configured token maximum
+- Changed chunk text or settings produce new IDs; old vectors are not automatically removed
+- Token counts use a proxy tokenizer rather than the embedding model tokenizer
+- The repository does not yet generate an investment or due-diligence report
+- Ollama and Qdrant integration tests require locally running services
+- Generated analysis will require independent verification against primary sources
 
-**Why hybrid retrieval with reranking?**
-Pure dense retrieval underperforms on numeric and named-entity queries — both of which dominate financial documents. Hybrid (BM25 + dense) plus a cross-encoder rerank step closes most of the gap. See [ADR-004](docs/adr/004-retrieval-pipeline.md).
-
-## Limitations and disclaimers
-
-This system is a research and engineering project. It is **not investment advice**. Reports are generated by language models and may contain factual errors, missing context, or fabricated citations. Always verify against primary sources before making any financial decision.
-
-The system respects all data source terms of service. Where rate limits apply (SEC EDGAR, news APIs), they are enforced client-side.
+This project is an engineering and research exercise and does not provide investment advice.
 
 ## License
 
-[MIT](LICENSE)
+MIT
