@@ -44,7 +44,7 @@ class OllamaSettings(BaseSettings):
         description="Model identifier used for chat/completion calls.",
     )
     embedding_model: str = Field(
-        default="bge-m3",
+        default="bge-m3:latest",
         description="Model identifier used for embedding generation.",
     )
     request_timeout_seconds: float = Field(
