@@ -60,9 +60,9 @@ def test_chunks_have_overlap_with_neighbours(chunker: Chunker) -> None:
         tail_words = chunks[i].text.split()[-5:]
         next_chunk_start = chunks[i + 1].text[:200]
         # At least one of the tail words should appear in the next chunk's head
-        assert any(
-            w in next_chunk_start for w in tail_words
-        ), f"No overlap found between chunks {i} and {i + 1}"
+        assert any(w in next_chunk_start for w in tail_words), (
+            f"No overlap found between chunks {i} and {i + 1}"
+        )
 
 
 def test_paragraph_boundaries_are_respected(chunker: Chunker) -> None:
